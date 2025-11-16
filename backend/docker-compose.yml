@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: "postgres:latest"
+    container_name: EMS-Postgres
+    restart: always
+    environment:
+      - "POSTGRES_USER=${DB_USER}"
+      - "POSTGRES_PASSWORD=${DB_PASS}"
+      - "POSTGRES_DB=${DB_NAME}"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5431:5432"
+
+volumes:
+  pgdata: {}
