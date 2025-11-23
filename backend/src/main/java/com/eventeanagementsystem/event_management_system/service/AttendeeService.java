@@ -1,6 +1,7 @@
 package com.eventeanagementsystem.event_management_system.service;
 
 import com.eventeanagementsystem.event_management_system.db.*;
+import com.eventeanagementsystem.event_management_system.notification.NotificationService;
 import com.eventeanagementsystem.event_management_system.security.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,12 +14,14 @@ public class AttendeeService {
     private final AttendeeRepository attendeeRepository;
     private final EventRepository eventRepository;
     private final AppUserRepository appUserRepository;
+    private final NotificationService notificationService;
 
     @Autowired
-    public AttendeeService(AttendeeRepository attendeeRepository, EventRepository eventRepository, AppUserRepository appUserRepository) {
+    public AttendeeService(AttendeeRepository attendeeRepository, EventRepository eventRepository, AppUserRepository appUserRepository, NotificationService notificationService) {
         this.attendeeRepository = attendeeRepository;
         this.eventRepository = eventRepository;
         this.appUserRepository = appUserRepository;
+        this.notificationService = notificationService;
     }
 
     public Attendee addAttendee(Attendee attendee) {
@@ -128,7 +131,14 @@ public class AttendeeService {
                 .orElseThrow(() -> new IllegalArgumentException("Attendee not found: " + attendeeId));
 
         attendee.setStatus(AttendanceStatus.APPROVED);
-        return attendeeRepository.save(attendee);
+        Attendee saved = attendeeRepository.save(attendee);
+
+        Event event = attendee.getEvent();
+        if (event != null && event.getAttendees() != null) {
+            notificationService.sendBookingApproved(saved, event);
+        }
+
+        return saved;
     }
 
     /** Reject a pending request */
@@ -137,7 +147,13 @@ public class AttendeeService {
                 .orElseThrow(() -> new IllegalArgumentException("Attendee not found: " + attendeeId));
 
         attendee.setStatus(AttendanceStatus.REJECTED);
-        return attendeeRepository.save(attendee);
+        Attendee saved = attendeeRepository.save(attendee);
+        Event event = attendee.getEvent();
+        if (event != null && event.getAttendees() != null) {
+            notificationService.sendBookingRejected(saved, event);
+        }
+
+        return saved;
     }
 
     // example: request to attend event (from previous step)
