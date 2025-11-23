@@ -18,7 +18,7 @@ import java.util.List;
 public class Organizer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Integer id;
 
     @NotBlank(message = "Organizer name cannot be blank")
     @Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
@@ -31,4 +31,8 @@ public class Organizer {
     @OneToMany(mappedBy = "organizer", cascade = CascadeType.ALL)
     @JsonManagedReference
     private List<Event> events;
+
+    @OneToOne
+    @JoinColumn(name = "user_id") // FK to app_user table
+    private AppUser user;
 }

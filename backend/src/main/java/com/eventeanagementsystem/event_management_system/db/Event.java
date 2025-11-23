@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -18,19 +19,21 @@ import java.util.List;
 public class Event {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Integer id;
     private String name;
     @CreationTimestamp
     private Date creationDate;
     private Date date;
     private String location;
 
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
-    private List<Attendee> attendees;
+    private List<Attendee> attendees = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "organizer_id")
     @JsonBackReference
     private Organizer organizer;
+
+    private Integer maxAttendees;
 }
