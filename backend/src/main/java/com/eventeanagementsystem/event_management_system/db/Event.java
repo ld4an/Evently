@@ -25,6 +25,9 @@ public class Event {
     private Date creationDate;
     private Date date;
     private String location;
+    @Column(columnDefinition = "TEXT")
+    private String description;
+    private String imageUrl;
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference

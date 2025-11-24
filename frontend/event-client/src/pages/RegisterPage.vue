@@ -1,8 +1,9 @@
 <template>
-  <q-page padding class="flex flex-center">
-    <q-card style="width: 400px; max-width: 90vw;">
+  <q-page padding class="flex flex-center bg-grey-2">
+    <q-card style="width: 480px; max-width: 92vw;" bordered>
       <q-card-section>
-        <div class="text-h6">Register</div>
+        <div class="text-h6">Create your account</div>
+        <div class="text-caption text-grey-7">Pick a role to get the right workspace.</div>
       </q-card-section>
 
       <q-card-section>
@@ -31,7 +32,6 @@
             required
           />
 
-          <!-- optional: choose role on register -->
           <q-select
             v-model="role"
             :options="roleOptions"
@@ -43,7 +43,7 @@
           />
 
           <q-btn
-            label="Register"
+            label="Register & Login"
             type="submit"
             color="primary"
             class="full-width q-mt-sm"
@@ -51,6 +51,12 @@
           />
         </q-form>
       </q-card-section>
+
+      <q-separator />
+      <q-card-actions align="center">
+        <span class="text-caption text-grey-7">Already have an account?</span>
+        <q-btn flat color="primary" size="sm" label="Login" @click="router.push({ name: 'login' })" />
+      </q-card-actions>
     </q-card>
   </q-page>
 </template>
@@ -86,10 +92,10 @@ async function onSubmit() {
 
     $q.notify({
       type: 'positive',
-      message: 'Registered successfully. You can now log in.',
+      message: 'Account created and logged in!',
     });
 
-    void router.push({ name: 'login' });
+    void router.push({ name: 'home' });
   } catch (error: unknown) {
     console.error(error);
     let message = 'Registration failed';

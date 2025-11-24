@@ -89,4 +89,23 @@ public class EventService {
 
         return attendeeRepository.findByEventId(eventId);
     }
+    public Event updateEvent(Integer id, Event updatedEvent) {
+        Event existing = getEventById(id);
+        ensureCanManageEvent(existing);
+
+        existing.setName(updatedEvent.getName());
+        existing.setDate(updatedEvent.getDate());
+        existing.setLocation(updatedEvent.getLocation());
+        existing.setDescription(updatedEvent.getDescription());
+        existing.setImageUrl(updatedEvent.getImageUrl());
+        existing.setMaxAttendees(updatedEvent.getMaxAttendees());
+
+        return eventRepository.save(existing);
+    }
+
+    public void deleteEvent(Integer id) {
+        Event existing = getEventById(id);
+        ensureCanManageEvent(existing);
+        eventRepository.delete(existing);
+    }
 }

@@ -48,6 +48,19 @@ public class EventController {
         return ResponseEntity.created(URI.create("/api/events/" + saved.getId())).body(saved);
     }
 
+    @PutMapping("/events/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
+    public Event updateEvent(@PathVariable Integer id, @RequestBody @Valid Event event) {
+        return eventService.updateEvent(id, event);
+    }
+
+    @DeleteMapping("/events/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
+    public ResponseEntity<Void> deleteEvent(@PathVariable Integer id) {
+        eventService.deleteEvent(id);
+        return ResponseEntity.noContent().build();
+    }
+
     // Publicly accessible, no annotation needed
     @GetMapping("/events")
     public List<Event> listEvents() {

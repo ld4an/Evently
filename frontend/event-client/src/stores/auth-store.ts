@@ -4,7 +4,7 @@ import api from 'src/services/api';
 export type UserRole = 'ATTENDEE' | 'ORGANIZER' | 'ADMIN';
 
 interface User {
-  id: number;
+  id: number | null;
   name: string;
   email: string;
   role: UserRole;
@@ -51,7 +51,7 @@ export const useAuthStore = defineStore('auth', {
   },
 
   actions: {
-    setAuth(token: string, user: User) {
+    setAuth(token: string, user: User | null) {
       this.token = token;
       this.user = user;
       localStorage.setItem('token', token);
@@ -68,7 +68,14 @@ export const useAuthStore = defineStore('auth', {
     async login(email: string, password: string) {
       try {
         const response = await api.post('/auth/login', { email, password });
-        this.setAuth(response.data.token, response.data.user);
+        // Backend returns { token, role } so we hydrate a minimal user locally
+        const user: User = {
+          id: response.data.user?.id ?? null,
+          name: response.data.user?.name ?? email.split('@')[0],
+          email: response.data.user?.email ?? email,
+          role: response.data.user?.role ?? response.data.role,
+        };
+        this.setAuth(response.data.token, user);
       } catch (error) {
         console.error('Login failed:', error);
         throw error;
@@ -77,8 +84,9 @@ export const useAuthStore = defineStore('auth', {
 
     async register(name: string, email: string, password: string, role: UserRole = 'ATTENDEE') {
       try {
-        const response = await api.post('/auth/register', { name, email, password, role });
-        this.setAuth(response.data.token, response.data.user);
+        await api.post('/auth/register', { name, email, password, role });
+        // Immediately log in to keep UX smooth
+        await this.login(email, password);
       } catch (error) {
         console.error('Registration failed:', error);
         throw error;

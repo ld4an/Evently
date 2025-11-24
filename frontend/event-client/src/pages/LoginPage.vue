@@ -1,8 +1,9 @@
 <template>
-  <q-page padding class="flex flex-center">
-    <q-card style="width: 400px; max-width: 90vw;">
+  <q-page padding class="flex flex-center bg-grey-2">
+    <q-card style="width: 440px; max-width: 92vw;" bordered>
       <q-card-section>
-        <div class="text-h6">Login</div>
+        <div class="text-h6">Welcome back</div>
+        <div class="text-caption text-grey-7">Sign in to continue.</div>
       </q-card-section>
 
       <q-card-section>
@@ -31,6 +32,11 @@
             class="full-width q-mt-sm"
             :loading="loading"
           />
+
+          <div class="text-caption text-grey-7 q-mt-md text-center">
+            No account?
+            <q-btn flat color="primary" size="sm" label="Register" @click="router.push({ name: 'register' })" />
+          </div>
         </q-form>
       </q-card-section>
     </q-card>
