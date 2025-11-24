@@ -96,6 +96,19 @@
                     <q-tooltip>Reject</q-tooltip>
                   </q-btn>
                 </template>
+                <template v-else-if="props.row.status === 'APPROVED'">
+                  <q-btn
+                    flat
+                    round
+                    color="negative"
+                    icon="person_remove"
+                    :loading="processingIds.has(props.row.id)"
+                    :disable="processingIds.has(props.row.id)"
+                    @click="removeAttendee(props.row)"
+                  >
+                    <q-tooltip>Remove from event</q-tooltip>
+                  </q-btn>
+                </template>
                 <span v-else class="text-grey-6">-</span>
               </q-td>
             </template>
@@ -211,6 +224,20 @@ async function rejectAttendee(attendee: Attendee) {
       attendeeItem.status = 'PENDING';
     }
     $q.notify({ type: 'negative', message: 'Failed to reject attendee' });
+  } finally {
+    processingIds.value.delete(attendee.id);
+  }
+}
+
+async function removeAttendee(attendee: Attendee) {
+  processingIds.value.add(attendee.id);
+  try {
+    await api.put(`/attendees/${attendee.id}/remove-event`);
+    $q.notify({ type: 'warning', message: `Removed ${attendee.name || attendee.email}` });
+    await fetchAttendees();
+  } catch (error) {
+    console.error(error);
+    $q.notify({ type: 'negative', message: 'Failed to remove attendee' });
   } finally {
     processingIds.value.delete(attendee.id);
   }

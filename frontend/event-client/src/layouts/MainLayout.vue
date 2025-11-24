@@ -65,10 +65,8 @@
               {{ userDisplay }}
               <q-tooltip>Signed in as {{ userDisplay }} ({{ role || 'role' }})</q-tooltip>
             </q-chip>
-            <q-btn flat round icon="account_circle">
-              <q-tooltip>
-                Logged in as {{ auth.user?.email || 'user' }}
-              </q-tooltip>
+            <q-btn flat round icon="manage_accounts" @click="goTo('profile')">
+              <q-tooltip>Account</q-tooltip>
             </q-btn>
             <q-btn flat icon="logout" label="Logout" @click="logout">
               <q-tooltip>Sign out</q-tooltip>
@@ -158,6 +156,12 @@
               <q-icon name="logout" color="negative" />
             </q-item-section>
             <q-item-section>Logout</q-item-section>
+          </q-item>
+          <q-item clickable v-ripple @click="goToAndClose('profile')">
+            <q-item-section avatar>
+              <q-icon name="manage_accounts" />
+            </q-item-section>
+            <q-item-section>Account</q-item-section>
           </q-item>
         </template>
 

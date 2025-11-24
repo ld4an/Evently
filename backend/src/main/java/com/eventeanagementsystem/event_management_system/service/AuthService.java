@@ -8,6 +8,7 @@ import com.eventeanagementsystem.event_management_system.db.UserRole;
 import com.eventeanagementsystem.event_management_system.dto.AuthResponse;
 import com.eventeanagementsystem.event_management_system.dto.LoginRequest;
 import com.eventeanagementsystem.event_management_system.dto.RegisterRequest;
+import com.eventeanagementsystem.event_management_system.dto.UpdateCredentialsRequest;
 import com.eventeanagementsystem.event_management_system.security.JwtUtil;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -74,5 +75,32 @@ public class AuthService {
 
         String token = jwtUtil.generateToken(user.getEmail());
         return new AuthResponse(token, user.getRole());
+    }
+
+    /**
+     * Update the current user's email and/or password and return a fresh token.
+     */
+    @Transactional
+    public AuthResponse updateCredentials(String currentEmail, UpdateCredentialsRequest request) {
+        AppUser user = userRepository.findByEmail(currentEmail)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (request.getEmail() != null && !request.getEmail().isBlank()) {
+            // avoid collision with another account
+            userRepository.findByEmail(request.getEmail())
+                    .filter(existing -> !existing.getId().equals(user.getId()))
+                    .ifPresent(existing -> {
+                        throw new IllegalArgumentException("Email already in use");
+                    });
+            user.setEmail(request.getEmail());
+        }
+
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+
+        AppUser saved = userRepository.save(user);
+        String token = jwtUtil.generateToken(saved.getEmail());
+        return new AuthResponse(token, saved.getRole());
     }
 }

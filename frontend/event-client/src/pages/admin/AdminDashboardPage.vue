@@ -39,6 +39,35 @@
     </div>
 
     <div class="text-h5 q-mb-md">Manage Events</div>
+
+    <q-card class="q-mb-lg">
+      <q-card-section>
+        <div class="text-subtitle1 text-weight-bold q-mb-sm">Create user / admin account</div>
+        <div class="text-caption text-grey-7 q-mb-md">Admins can bootstrap new accounts. Organizers will get an organizer profile automatically.</div>
+        <q-form @submit.prevent="createAccount" class="row q-col-gutter-md">
+          <div class="col-12 col-md-4">
+            <q-input v-model="newUser.email" label="Email" type="email" outlined dense />
+          </div>
+          <div class="col-12 col-md-4">
+            <q-input v-model="newUser.password" label="Password" type="password" outlined dense />
+          </div>
+          <div class="col-12 col-md-3">
+            <q-select
+              v-model="newUser.role"
+              :options="roleOptions"
+              label="Role"
+              outlined
+              dense
+              emit-value
+              map-options
+            />
+          </div>
+          <div class="col-12 col-md-1 flex items-end">
+            <q-btn color="primary" unelevated type="submit" label="Add" :loading="creatingAccount" />
+          </div>
+        </q-form>
+      </q-card-section>
+    </q-card>
     
     <q-table
       title="All Events"
@@ -104,6 +133,13 @@ const upcomingCount = computed(() =>
     return d >= now && d <= inThirty;
   }).length
 );
+const newUser = ref({ email: '', password: '', role: 'ATTENDEE' });
+const creatingAccount = ref(false);
+const roleOptions = [
+  { label: 'Attendee', value: 'ATTENDEE' },
+  { label: 'Organizer', value: 'ORGANIZER' },
+  { label: 'Admin', value: 'ADMIN' },
+];
 
 const columns: QTableColumn[] = [
   { name: 'id', label: 'ID', field: 'id', sortable: true, align: 'left' },
@@ -145,6 +181,24 @@ async function deleteEvent() {
   } catch (error) {
     console.error(error);
     $q.notify({ type: 'negative', message: 'Failed to delete event' });
+  }
+}
+
+async function createAccount() {
+  creatingAccount.value = true;
+  try {
+    await api.post('/auth/register', {
+      email: newUser.value.email,
+      password: newUser.value.password,
+      role: newUser.value.role,
+    });
+    $q.notify({ type: 'positive', message: 'Account created' });
+    newUser.value = { email: '', password: '', role: 'ATTENDEE' };
+  } catch (error) {
+    console.error(error);
+    $q.notify({ type: 'negative', message: 'Failed to create account' });
+  } finally {
+    creatingAccount.value = false;
   }
 }
 </script>

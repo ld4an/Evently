@@ -2,6 +2,7 @@ package com.eventeanagementsystem.event_management_system.service;
 
 import com.eventeanagementsystem.event_management_system.db.*;
 import com.eventeanagementsystem.event_management_system.dto.EventStatsDto;
+import com.eventeanagementsystem.event_management_system.notification.NotificationService;
 import com.eventeanagementsystem.event_management_system.security.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,16 +15,37 @@ public class EventService {
 
     private final EventRepository eventRepository;
     private final OrganizerRepository organizerRepository;
+    private final NotificationService notificationService;
 
     @Autowired
-    public EventService(EventRepository eventRepository,OrganizerRepository organizerRepository) {
+    public EventService(EventRepository eventRepository,
+                        OrganizerRepository organizerRepository,
+                        NotificationService notificationService) {
         this.organizerRepository = organizerRepository;
         this.eventRepository = eventRepository;
+        this.notificationService = notificationService;
     }
 
     public Event addEvent(Event event, Integer organizerId) {
         Organizer organizer = organizerRepository.findById(organizerId)
                 .orElseThrow(()->new IllegalArgumentException("Organizer not found: " + organizerId));
+        event.setOrganizer(organizer);
+        return eventRepository.save(event);
+    }
+
+    /**
+     * Create an event for the currently authenticated organizer (or admin acting as organizer).
+     * Uses the user email from the security context to resolve the Organizer record.
+     */
+    public Event addEventForCurrentOrganizer(Event event) {
+        String email = SecurityUtils.getCurrentUserEmail();
+        if (email == null) {
+            throw new IllegalStateException("No authenticated user");
+        }
+
+        Organizer organizer = organizerRepository.findByUserEmail(email)
+                .orElseThrow(() -> new IllegalStateException("Organizer profile not found for user " + email));
+
         event.setOrganizer(organizer);
         return eventRepository.save(event);
     }
@@ -93,6 +115,10 @@ public class EventService {
         Event existing = getEventById(id);
         ensureCanManageEvent(existing);
 
+        String oldName = existing.getName();
+        String oldDate = existing.getDate() != null ? existing.getDate().toString() : null;
+        String oldLocation = existing.getLocation();
+
         existing.setName(updatedEvent.getName());
         existing.setDate(updatedEvent.getDate());
         existing.setLocation(updatedEvent.getLocation());
@@ -100,7 +126,9 @@ public class EventService {
         existing.setImageUrl(updatedEvent.getImageUrl());
         existing.setMaxAttendees(updatedEvent.getMaxAttendees());
 
-        return eventRepository.save(existing);
+        Event saved = eventRepository.save(existing);
+        notificationService.sendEventUpdated(saved, oldName, oldDate, oldLocation);
+        return saved;
     }
 
     public void deleteEvent(Integer id) {

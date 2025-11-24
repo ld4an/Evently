@@ -48,6 +48,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('pages/NotificationsPage.vue'),
         meta: { requiresAuth: true },
       },
+      {
+        path: 'profile',
+        name: 'profile',
+        component: () => import('pages/ProfilePage.vue'),
+        meta: { requiresAuth: true },
+      },
 
       // Organizer
       {

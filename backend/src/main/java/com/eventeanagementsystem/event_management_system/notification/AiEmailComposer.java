@@ -34,6 +34,16 @@ public class AiEmailComposer {
         String prompt = buildRejectedPrompt(attendee, event);
         return callOllamaOrFallback(prompt, defaultRejectedTemplate(attendee, event));
     }
+
+    public String composeRemovedEmailBody(Attendee attendee, Event event) {
+        String prompt = buildRemovedPrompt(attendee, event);
+        return callOllamaOrFallback(prompt, defaultRemovedTemplate(attendee, event));
+    }
+
+    public String composeEventUpdatedEmailBody(Attendee attendee, Event event, String oldName, String oldDate, String oldLocation) {
+        String prompt = buildEventUpdatedPrompt(attendee, event, oldName, oldDate, oldLocation);
+        return callOllamaOrFallback(prompt, defaultEventUpdatedTemplate(attendee, event, oldName, oldDate, oldLocation));
+    }
     private static final SimpleDateFormat EVENT_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm");
     private String buildApprovedPrompt(Attendee attendee, Event event) {
         String eventDate = event.getDate() != null
@@ -80,6 +90,45 @@ public class AiEmailComposer {
                 safe(attendee.getName()),
                 safe(event.getName()),
                 eventDate
+        );
+    }
+
+    private String buildRemovedPrompt(Attendee attendee, Event event) {
+        String eventDate = event.getDate() != null
+                ? EVENT_DATE_FORMAT.format(event.getDate())
+                : "the scheduled time";
+
+        return """
+                Write a concise email to inform a user they have been removed from an event.
+                Include event name and date/time. Keep it polite and 4-6 sentences.
+                Recipient name: %s
+                Event name: %s
+                Event date/time: %s
+                """.formatted(safe(attendee.getName()), safe(event.getName()), eventDate);
+    }
+
+    private String buildEventUpdatedPrompt(Attendee attendee, Event event, String oldName, String oldDate, String oldLocation) {
+        String newDate = event.getDate() != null
+                ? EVENT_DATE_FORMAT.format(event.getDate())
+                : "the scheduled time";
+        return """
+                Write a concise email to notify a user that an event they joined was updated.
+                Mention old vs new details if available. Keep it friendly and brief (5-7 sentences).
+                Recipient name: %s
+                Old name: %s
+                New name: %s
+                Old date: %s
+                New date: %s
+                Old location: %s
+                New location: %s
+                """.formatted(
+                safe(attendee.getName()),
+                safe(oldName),
+                safe(event.getName()),
+                safe(oldDate),
+                newDate,
+                safe(oldLocation),
+                safe(event.getLocation())
         );
     }
 
@@ -140,6 +189,48 @@ public class AiEmailComposer {
                 Best regards,
                 Event Management Team
                 """.formatted(name, eventName);
+    }
+
+    private String defaultRemovedTemplate(Attendee attendee, Event event) {
+        String name = safe(attendee.getName());
+        String eventName = safe(event.getName());
+        String eventDate = event.getDate() != null
+                ? EVENT_DATE_FORMAT.format(event.getDate())
+                : "the scheduled time";
+
+        return """
+                Hi %s,
+
+                You have been removed from the event "%s" scheduled for %s.
+                If you believe this is a mistake, please contact the organizer.
+
+                Best regards,
+                Event Management Team
+                """.formatted(name, eventName, eventDate);
+    }
+
+    private String defaultEventUpdatedTemplate(Attendee attendee, Event event, String oldName, String oldDate, String oldLocation) {
+        String name = safe(attendee.getName());
+        String newDate = event.getDate() != null
+                ? EVENT_DATE_FORMAT.format(event.getDate())
+                : "the scheduled time";
+
+        return """
+                Hi %s,
+
+                The event you joined has been updated.
+                Old name/date/location: %s / %s / %s
+                New name/date/location: %s / %s / %s
+
+                Please review the new details. We hope to see you there!
+
+                Best regards,
+                Event Management Team
+                """.formatted(
+                name,
+                safe(oldName), safe(oldDate), safe(oldLocation),
+                safe(event.getName()), newDate, safe(event.getLocation())
+        );
     }
 
     private String safe(String value) {

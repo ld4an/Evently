@@ -48,6 +48,13 @@ public class EventController {
         return ResponseEntity.created(URI.create("/api/events/" + saved.getId())).body(saved);
     }
 
+    @PostMapping("/me/events")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
+    public ResponseEntity<Event> addEventForCurrentOrganizer(@RequestBody @Valid Event event) {
+        Event saved = eventService.addEventForCurrentOrganizer(event);
+        return ResponseEntity.created(URI.create("/api/events/" + saved.getId())).body(saved);
+    }
+
     @PutMapping("/events/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
     public Event updateEvent(@PathVariable Integer id, @RequestBody @Valid Event event) {

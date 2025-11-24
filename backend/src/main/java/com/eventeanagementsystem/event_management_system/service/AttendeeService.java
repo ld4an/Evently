@@ -69,8 +69,11 @@ public class AttendeeService {
             event.getAttendees().remove(attendee);
         }
         attendee.setEvent(null);
-        attendeeRepository.save(attendee);
-        return attendee;
+        Attendee saved = attendeeRepository.save(attendee);
+        if (event != null) {
+            notificationService.sendAttendeeRemoved(saved, event);
+        }
+        return saved;
     }
     /**
      * Returnează toți participanții unui eveniment.

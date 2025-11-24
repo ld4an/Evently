@@ -59,15 +59,6 @@
                 outlined
               />
 
-              <q-input
-                v-if="!isEdit"
-                v-model.number="organizerId"
-                label="Organizer ID"
-                type="number"
-                outlined
-                hint="Provide your organizer profile ID (required until backend infers it from the token)"
-              />
-
               <div class="row justify-end q-mt-lg">
                 <q-btn label="Cancel" flat color="grey" class="q-mr-sm" @click="router.back()" />
                 <q-btn
@@ -107,22 +98,10 @@ const form = ref({
   imageUrl: '',
   maxAttendees: 100,
 });
-const organizerId = ref<number | null>(null);
 
 onMounted(async () => {
   if (isEdit.value) {
     await fetchEvent();
-  } else {
-    // try to prefill organizer id from existing events
-    try {
-      const resp = await api.get('/me/events');
-      const first = resp.data?.[0];
-      if (first?.organizer?.id) {
-        organizerId.value = first.organizer.id;
-      }
-    } catch {
-      // ignore; user can enter organizer ID manually
-    }
   }
 });
 
@@ -164,12 +143,7 @@ async function onSubmit() {
       await api.put(`/events/${eventId}`, payload);
       $q.notify({ type: 'positive', message: 'Event updated successfully' });
     } else {
-      if (!organizerId.value) {
-        throw new Error('Organizer ID is required to create an event');
-      }
-      await api.post('/events', payload, {
-        params: { organizerId: organizerId.value }
-      });
+      await api.post('/me/events', payload);
       $q.notify({ type: 'positive', message: 'Event created successfully' });
     }
     router.back();
