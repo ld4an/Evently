@@ -1,6 +1,6 @@
 package com.eventeanagementsystem.event_management_system.db;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -29,7 +29,7 @@ public class Organizer {
     private String email;
 
     @OneToMany(mappedBy = "organizer", cascade = CascadeType.ALL)
-    @JsonManagedReference
+    @JsonIgnoreProperties(value = {"organizer", "attendees"}, allowSetters = true)
     private List<Event> events;
 
     @OneToOne

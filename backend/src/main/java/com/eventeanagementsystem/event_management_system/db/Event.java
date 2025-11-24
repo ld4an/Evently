@@ -1,7 +1,6 @@
 package com.eventeanagementsystem.event_management_system.db;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -30,12 +29,12 @@ public class Event {
     private String imageUrl;
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
+    @JsonIgnoreProperties(value = {"event", "user"}, allowSetters = true)
     private List<Attendee> attendees = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "organizer_id")
-    @JsonBackReference
+    @JsonIgnoreProperties(value = {"events", "user"}, allowSetters = true)
     private Organizer organizer;
 
     private Integer maxAttendees;

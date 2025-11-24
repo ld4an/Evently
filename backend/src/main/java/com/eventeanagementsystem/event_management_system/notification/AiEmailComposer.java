@@ -162,6 +162,7 @@ public class AiEmailComposer {
         String eventDate = event.getDate() != null
                 ? EVENT_DATE_FORMAT.format(event.getDate())
                 : "the scheduled time";
+        String organizer = organizerName(event);
 
         return """
                 Hi %s,
@@ -172,13 +173,14 @@ public class AiEmailComposer {
                 We’re looking forward to seeing you there!
 
                 Best regards,
-                Event Management Team
-                """.formatted(name, eventName, eventDate);
+                %s
+                """.formatted(name, eventName, eventDate, organizer);
     }
 
     private String defaultRejectedTemplate(Attendee attendee, Event event) {
         String name = safe(attendee.getName());
         String eventName = safe(event.getName());
+        String organizer = organizerName(event);
 
         return """
                 Hi %s,
@@ -187,8 +189,8 @@ public class AiEmailComposer {
                 We’re sorry for the inconvenience and hope you’ll consider joining our other events.
 
                 Best regards,
-                Event Management Team
-                """.formatted(name, eventName);
+                %s
+                """.formatted(name, eventName, organizer);
     }
 
     private String defaultRemovedTemplate(Attendee attendee, Event event) {
@@ -197,6 +199,7 @@ public class AiEmailComposer {
         String eventDate = event.getDate() != null
                 ? EVENT_DATE_FORMAT.format(event.getDate())
                 : "the scheduled time";
+        String organizer = organizerName(event);
 
         return """
                 Hi %s,
@@ -205,8 +208,8 @@ public class AiEmailComposer {
                 If you believe this is a mistake, please contact the organizer.
 
                 Best regards,
-                Event Management Team
-                """.formatted(name, eventName, eventDate);
+                %s
+                """.formatted(name, eventName, eventDate, organizer);
     }
 
     private String defaultEventUpdatedTemplate(Attendee attendee, Event event, String oldName, String oldDate, String oldLocation) {
@@ -214,6 +217,7 @@ public class AiEmailComposer {
         String newDate = event.getDate() != null
                 ? EVENT_DATE_FORMAT.format(event.getDate())
                 : "the scheduled time";
+        String organizer = organizerName(event);
 
         return """
                 Hi %s,
@@ -225,12 +229,20 @@ public class AiEmailComposer {
                 Please review the new details. We hope to see you there!
 
                 Best regards,
-                Event Management Team
+                %s
                 """.formatted(
                 name,
                 safe(oldName), safe(oldDate), safe(oldLocation),
-                safe(event.getName()), newDate, safe(event.getLocation())
+                safe(event.getName()), newDate, safe(event.getLocation()),
+                organizer
         );
+    }
+
+    private String organizerName(Event event) {
+        if (event != null && event.getOrganizer() != null && event.getOrganizer().getName() != null) {
+            return event.getOrganizer().getName();
+        }
+        return "Event Organizer";
     }
 
     private String safe(String value) {

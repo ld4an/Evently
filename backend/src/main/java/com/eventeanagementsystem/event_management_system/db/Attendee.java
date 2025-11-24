@@ -1,6 +1,6 @@
 package com.eventeanagementsystem.event_management_system.db;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -22,7 +22,7 @@ public class Attendee {
 
     @ManyToOne
     @JoinColumn(name = "event_id")
-    @JsonBackReference
+    @JsonIgnoreProperties(value = {"attendees", "organizer"}, allowSetters = true)
     private Event event;
 
     @Enumerated(EnumType.STRING)
