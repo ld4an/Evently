@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { useAuthStore } from 'src/stores/auth-store';
 
+// Use env-provided base URL so capacitor/mobile hits the right host
 const api = axios.create({
-  baseURL: '/api', // goes through dev proxy
+  baseURL: process.env.API_BASE_URL || '/api',
 });
 
 // Add Authorization: Bearer <token> to outgoing requests

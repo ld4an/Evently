@@ -11,9 +11,9 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        // Allow requests from the Vue development server
-        registry.addMapping("/api/**") // Only configure CORS for your API endpoints
-                .allowedOrigins("http://localhost:9000") // The default port for Vite (Vue's build tool)
+        // Allow API calls from local dev, LAN devices, and emulators
+        registry.addMapping("/api/**")
+                .allowedOriginPatterns("*")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
