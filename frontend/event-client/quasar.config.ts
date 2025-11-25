@@ -3,7 +3,8 @@
 
 import { defineConfig } from '#q-app/wrappers';
 
-export default defineConfig((/* ctx */) => {
+export default defineConfig((ctx) => {
+  const isCapacitor = ctx.modeName === 'capacitor';
   return {
     // https://v2.quasar.dev/quasar-cli-vite/prefetch-feature
     // preFetch: true,
@@ -61,7 +62,11 @@ export default defineConfig((/* ctx */) => {
 
       // extendViteConf (viteConf) {},
       // viteVuePluginOptions: {},
-
+      env: {
+        API_BASE_URL: isCapacitor
+          ? 'http://192.168.0.161:8083/api' // or 'http://10.0.2.2:8083/api'
+          : '/api',                         // web dev via devServer.proxy
+      },
       vitePlugins: [
         [
           'vite-plugin-checker',
