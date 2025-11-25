@@ -22,6 +22,12 @@
       <q-spinner-dots color="primary" size="40px" />
     </div>
 
+    <div v-else-if="!isOrganizerOrAdmin && !isAttendee" class="text-center q-my-xl text-grey-6">
+      <q-icon name="lock" size="4rem" />
+      <div class="text-h6 q-mt-sm">Access restricted</div>
+      <div class="text-caption q-mt-xs">Please log in with an attendee or organizer account.</div>
+    </div>
+
     <div v-else-if="events.length === 0" class="text-center q-my-xl text-grey-6">
       <q-icon name="event_note" size="4rem" />
       <div class="text-h6 q-mt-sm">

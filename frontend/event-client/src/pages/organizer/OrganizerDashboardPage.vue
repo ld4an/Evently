@@ -53,6 +53,12 @@
       <q-spinner-dots color="primary" size="40px" />
     </div>
 
+    <div v-else-if="!isOrganizerOrAdmin" class="text-center q-my-xl text-grey-6">
+      <q-icon name="lock" size="4rem" />
+      <div class="text-h6 q-mt-sm">Organizer access required.</div>
+      <div class="text-caption q-mt-xs">Please log in with an organizer account.</div>
+    </div>
+
     <div v-else-if="events.length === 0" class="text-center q-my-xl text-grey-6">
       <q-icon name="event_busy" size="4rem" />
       <div class="text-h6 q-mt-sm">You haven't created any events yet.</div>
@@ -135,6 +141,7 @@ import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import type { QTableColumn } from 'quasar';
 import api from 'src/services/api';
+import { useAuthStore } from 'src/stores/auth-store';
 
 interface Attendee {
   id: number;
@@ -151,9 +158,11 @@ interface Event {
 
 const router = useRouter();
 const $q = useQuasar();
+const auth = useAuthStore();
 
 const events = ref<Event[]>([]);
 const loading = ref(true);
+const isOrganizerOrAdmin = computed(() => auth.role === 'ORGANIZER' || auth.role === 'ADMIN');
 
 const totalEvents = computed(() => events.value.length);
 const upcomingEvents = computed(() =>
@@ -208,6 +217,11 @@ function formatDate(value: string) {
 }
 
 onMounted(async () => {
+  if (!isOrganizerOrAdmin.value) {
+    loading.value = false;
+    $q.notify({ type: 'warning', message: 'Organizer access required' });
+    return;
+  }
   try {
     // adjust this endpoint if needed to match backend
     const response = await api.get('/me/events');
