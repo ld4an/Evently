@@ -75,6 +75,34 @@ public class AttendeeService {
         }
         return saved;
     }
+
+    /**
+     * Admin-only: ban an attendee from an event (removes them and marks status).
+     */
+    public Attendee banAttendeeFromEvent(int attendeeId) {
+        Attendee attendee = attendeeRepository.findById(attendeeId)
+                .orElseThrow(() -> new IllegalArgumentException("Attendee not found: " + attendeeId));
+        Event event = attendee.getEvent();
+        attendee.setStatus(AttendanceStatus.BANNED); // keep the event reference to record the ban scope
+        Attendee saved = attendeeRepository.save(attendee);
+        if (event != null) {
+            notificationService.sendAttendeeRemoved(saved, event);
+        }
+        return saved;
+    }
+
+    /**
+     * Admin-only: unban an attendee for an event (allows future requests).
+     */
+    public Attendee unbanAttendee(int attendeeId) {
+        Attendee attendee = attendeeRepository.findById(attendeeId)
+                .orElseThrow(() -> new IllegalArgumentException("Attendee not found: " + attendeeId));
+        if (attendee.getStatus() != AttendanceStatus.BANNED) {
+            return attendee;
+        }
+        attendee.setStatus(AttendanceStatus.REJECTED); // reset to a non-banned state
+        return attendeeRepository.save(attendee);
+    }
     /**
      * Returnează toți participanții unui eveniment.
      */
@@ -139,7 +167,13 @@ public class AttendeeService {
         List<Attendee> existingRequests = attendeeRepository.findByUserEmail(email);
         for (Attendee existing : existingRequests) {
             if (existing.getEvent() != null && existing.getEvent().getId().equals(eventId)) {
-                throw new IllegalStateException("You have already requested to join this event");
+                if (existing.getStatus() == AttendanceStatus.BANNED) {
+                    throw new IllegalStateException("You are banned from this event");
+                }
+                if (existing.getStatus() == AttendanceStatus.APPROVED || existing.getStatus() == AttendanceStatus.PENDING) {
+                    throw new IllegalStateException("You have already requested to join this event");
+                }
+                // For REJECTED/CANCELED we allow a new request
             }
         }
         Attendee attendee = new Attendee();

@@ -88,7 +88,6 @@ public class EventController {
 
 
     @GetMapping("/events/{eventId}/attendees")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
     public List<Attendee> getAttendeesPerEvent(@PathVariable Integer eventId) {
         return attendeeService.getAttendeesPerEvent(eventId);
     }
@@ -97,7 +96,7 @@ public class EventController {
 
     // ATTENDEE: request to attend an event
     @PostMapping("/events/{eventId}/requests")
-    @PreAuthorize("hasRole('ATTENDEE')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Attendee> requestToAttend(@PathVariable Integer eventId,
                                                     @RequestBody @Valid Attendee attendeeBody) {
         Attendee saved = attendeeService.requestToAttendEvent(eventId, attendeeBody);

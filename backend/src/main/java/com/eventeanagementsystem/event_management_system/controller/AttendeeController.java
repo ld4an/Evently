@@ -58,4 +58,16 @@ public class AttendeeController {
         return ResponseEntity.ok(updated);
     }
 
+    @PutMapping("/{attendeeId}/ban")
+    public ResponseEntity<Attendee> banAttendee(@PathVariable int attendeeId) {
+        Attendee updated = attendeeService.banAttendeeFromEvent(attendeeId);
+        return ResponseEntity.ok(updated);
+    }
+
+    @PutMapping("/{attendeeId}/unban")
+    public ResponseEntity<Attendee> unbanAttendee(@PathVariable int attendeeId) {
+        Attendee updated = attendeeService.unbanAttendee(attendeeId);
+        return ResponseEntity.ok(updated);
+    }
+
 }

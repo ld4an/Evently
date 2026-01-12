@@ -4,5 +4,6 @@ public enum AttendanceStatus {
     PENDING,
     APPROVED,
     REJECTED,
-    CANCELED
+    CANCELED,
+    BANNED
 }
