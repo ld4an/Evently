@@ -32,7 +32,7 @@
           <q-btn flat label="Events" @click="goTo('events')" />
 
           <q-btn
-            v-if="isAuthenticated && (role === 'ORGANIZER' || role === 'ADMIN')"
+            v-if="isAuthenticated && role === 'ORGANIZER'"
             flat
             icon="dashboard"
             label="Organizer"
@@ -118,7 +118,12 @@
         <template v-if="isAuthenticated">
           <q-separator class="q-my-md" />
 
-          <q-item clickable v-ripple @click="goToAndClose('my-events')">
+          <q-item
+            v-if="role !== 'ADMIN'"
+            clickable
+            v-ripple
+            @click="goToAndClose('my-events')"
+          >
             <q-item-section avatar>
               <q-icon name="bookmark" />
             </q-item-section>
@@ -126,7 +131,7 @@
           </q-item>
 
           <q-item
-            v-if="role === 'ORGANIZER' || role === 'ADMIN'"
+            v-if="role === 'ORGANIZER'"
             clickable
             v-ripple
             @click="goToAndClose('organizer-dashboard')"

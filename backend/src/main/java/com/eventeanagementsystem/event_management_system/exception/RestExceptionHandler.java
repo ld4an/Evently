@@ -45,6 +45,12 @@ public class RestExceptionHandler {
                 .collect(Collectors.toList());
 
         body.put("messages", errors);
+        // Provide a single message field for clients that expect it (e.g., the first validation error)
+        if (!errors.isEmpty()) {
+            body.put("message", errors.get(0));
+        } else {
+            body.put("message", "Validation failed");
+        }
         body.put("path", request.getDescription(false).replace("uri=", ""));
 
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);

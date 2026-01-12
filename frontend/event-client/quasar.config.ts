@@ -64,7 +64,7 @@ export default defineConfig((ctx) => {
       // viteVuePluginOptions: {},
       env: {
         API_BASE_URL: isCapacitor
-          ? 'http://192.168.0.161:8083/api' // or 'http://10.0.2.2:8083/api'
+          ? 'http://192.168.56.1:8083/api' // or 'http://10.0.2.2:8083/api'
           : '/api',                         // web dev via devServer.proxy
       },
       vitePlugins: [
