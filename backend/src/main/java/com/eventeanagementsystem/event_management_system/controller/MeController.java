@@ -1,5 +1,6 @@
 package com.eventeanagementsystem.event_management_system.controller;
 
+import com.eventeanagementsystem.event_management_system.db.AttendanceStatus;
 import com.eventeanagementsystem.event_management_system.db.Attendee;
 import com.eventeanagementsystem.event_management_system.db.Event;
 import com.eventeanagementsystem.event_management_system.service.AttendeeService;
@@ -39,9 +40,9 @@ public class MeController {
     public List<Event> getMyEvents() {
         // Get all attendee requests for the current user
         List<Attendee> myRequests = attendeeService.getMyRequests();
-        // Extract the events from approved attendees
+        // Extract only events where the attendee is approved
         return myRequests.stream()
-                .filter(attendee -> attendee.getEvent() != null)
+                .filter(attendee -> attendee.getEvent() != null && attendee.getStatus() == AttendanceStatus.APPROVED)
                 .map(Attendee::getEvent)
                 .distinct()
                 .collect(Collectors.toList());

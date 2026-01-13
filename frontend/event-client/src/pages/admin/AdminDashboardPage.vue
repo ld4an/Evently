@@ -78,12 +78,53 @@
     >
       <template v-slot:body-cell-actions="props">
         <q-td :props="props">
+          <q-btn flat round color="info" icon="group" @click="openAttendees(props.row)" />
           <q-btn flat round color="primary" icon="visibility" @click="router.push({ name: 'event-details', params: { id: props.row.id } })" />
           <q-btn flat round color="warning" icon="edit" @click="router.push({ name: 'organizer-event-edit', params: { id: props.row.id } })" />
           <q-btn flat round color="negative" icon="delete" @click="confirmDelete(props.row)" />
         </q-td>
       </template>
     </q-table>
+
+    <q-dialog v-model="showAttendeesDialog" persistent maximized>
+      <q-card>
+        <q-bar class="bg-primary text-white">
+          <div class="text-subtitle1">{{ activeEvent?.name || 'Event' }} — Attendees</div>
+          <q-space />
+          <q-btn dense flat icon="close" v-close-popup />
+        </q-bar>
+        <q-card-section>
+          <div class="text-caption text-grey-7 q-mb-md">
+            Manage attendees for this event. You can remove or ban (marks as banned and removes from the event).
+          </div>
+          <q-table
+            :rows="attendees"
+            :columns="attendeeColumns"
+            row-key="id"
+            :loading="attendeesLoading"
+            flat
+            bordered
+          >
+            <template v-slot:body-cell-actions="props">
+              <q-td :props="props">
+                <q-btn dense flat round icon="logout" color="warning" @click="removeAttendee(props.row)" :loading="actionLoadingId === props.row.id && actionType === 'remove'" />
+                <q-btn dense flat round icon="block" color="negative" @click="banAttendee(props.row)" :loading="actionLoadingId === props.row.id && actionType === 'ban'" />
+                <q-btn
+                  v-if="props.row.status === 'BANNED'"
+                  dense
+                  flat
+                  round
+                  icon="lock_open"
+                  color="positive"
+                  @click="unbanAttendee(props.row)"
+                  :loading="actionLoadingId === props.row.id && actionType === 'unban'"
+                />
+              </q-td>
+            </template>
+          </q-table>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
 
     <q-dialog v-model="showDeleteDialog">
       <q-card>
@@ -106,6 +147,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import type { QTableColumn } from 'quasar';
+import { isAxiosError } from 'axios';
 import api from 'src/services/api';
 
 const router = useRouter();
@@ -117,6 +159,13 @@ interface Event {
   date: string;
   location: string;
   organizer?: { name: string };
+}
+
+interface Attendee {
+  id: number;
+  name?: string;
+  email: string;
+  status: string;
 }
 
 const events = ref<Event[]>([]);
@@ -150,6 +199,21 @@ const columns: QTableColumn[] = [
   { name: 'actions', label: 'Actions', field: 'actions', align: 'center' },
 ];
 
+const attendeeColumns: QTableColumn[] = [
+  { name: 'id', label: 'ID', field: 'id', align: 'left' },
+  { name: 'name', label: 'Name', field: (row: Attendee) => row.name || '—', align: 'left' },
+  { name: 'email', label: 'Email', field: 'email', align: 'left' },
+  { name: 'status', label: 'Status', field: 'status', align: 'left' },
+  { name: 'actions', label: 'Actions', field: 'actions', align: 'center' },
+];
+
+const attendees = ref<Attendee[]>([]);
+const attendeesLoading = ref(false);
+const showAttendeesDialog = ref(false);
+const activeEvent = ref<Event | null>(null);
+const actionLoadingId = ref<number | null>(null);
+const actionType = ref<'remove' | 'ban' | 'unban' | null>(null);
+
 onMounted(async () => {
   await fetchEvents();
 });
@@ -170,6 +234,92 @@ async function fetchEvents() {
 function confirmDelete(event: Event) {
   eventToDelete.value = event;
   showDeleteDialog.value = true;
+}
+
+async function openAttendees(event: Event) {
+  activeEvent.value = event;
+  showAttendeesDialog.value = true;
+  attendeesLoading.value = true;
+  try {
+    const response = await api.get(`/events/${event.id}/attendees`);
+    attendees.value = response.data;
+  } catch (error) {
+    console.error('Failed to fetch attendees', error);
+    $q.notify({ type: 'negative', message: 'Failed to load attendees' });
+  } finally {
+    attendeesLoading.value = false;
+  }
+}
+
+async function removeAttendee(attendee: Attendee) {
+  if (!attendee?.id) return;
+  actionLoadingId.value = attendee.id;
+  actionType.value = 'remove';
+  try {
+    await api.put(`/attendees/${attendee.id}/remove-event`);
+    $q.notify({ type: 'positive', message: 'Attendee removed from event' });
+    if (activeEvent.value) {
+      await openAttendees(activeEvent.value);
+    }
+  } catch (error) {
+    console.error('Failed to remove attendee', error);
+    $q.notify({ type: 'negative', message: 'Failed to remove attendee' });
+  } finally {
+    actionLoadingId.value = null;
+    actionType.value = null;
+  }
+}
+
+async function banAttendee(attendee: Attendee) {
+  if (!attendee?.id) return;
+  actionLoadingId.value = attendee.id;
+  actionType.value = 'ban';
+  try {
+    await api.put(`/attendees/${attendee.id}/ban`);
+    $q.notify({ type: 'positive', message: 'Attendee banned' });
+    if (activeEvent.value) {
+      await openAttendees(activeEvent.value);
+    }
+  } catch (error) {
+    console.error('Failed to ban attendee', error);
+    let message = 'Failed to ban attendee';
+    if (isAxiosError(error)) {
+      const data = error.response?.data as { message?: string; error?: string } | undefined;
+      message = data?.message || data?.error || message;
+    } else if (error instanceof Error) {
+      message = error.message;
+    }
+    $q.notify({ type: 'negative', message });
+  } finally {
+    actionLoadingId.value = null;
+    actionType.value = null;
+  }
+}
+
+async function unbanAttendee(attendee: Attendee) {
+  if (!attendee?.id) return;
+  actionLoadingId.value = attendee.id;
+  actionType.value = 'unban';
+  try {
+    await api.put(`/attendees/${attendee.id}/unban`);
+    $q.notify({ type: 'positive', message: 'Attendee unbanned' });
+    if (activeEvent.value) {
+      await openAttendees(activeEvent.value);
+    }
+  } catch (error) {
+    console.error('Failed to unban attendee', error);
+    let message = 'Failed to unban attendee';
+    if (isAxiosError(error)) {
+      const data = error.response?.data as { message?: string; error?: string } | undefined;
+      message = data?.message || data?.error || message;
+    } else if (error instanceof Error) {
+      message = error.message;
+    }
+    $q.notify({ type: 'negative', message });
+  } finally {
+    actionLoadingId.value = null;
+    actionType.value = null;
+  }
 }
 
 async function deleteEvent() {
